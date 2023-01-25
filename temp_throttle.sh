@@ -16,6 +16,11 @@ EOF
 # Additional Credits
 # Wolfgang Ocker <weo AT weo1 DOT de> - Patch for unspecified cpu frequencies.
 
+# Additional Credits
+# ps1code <ps1code@outlook.com> - Patch for checking all cores for max 
+				  temperature instead of the first three.
+# ps1code <ps1code@outlook.com> - New feature, can now use lm-sensors (tested on v3.06)
+#				  to get cpu temperature
 # License: GNU GPL 2.0
 
 # Generic  function for printing an error and exiting.
@@ -25,14 +30,18 @@ err_exit () {
 	exit 128
 }
 
-if [ $# -ne 1 ]; then
+if [ $# -lt 1 ]; then
 	# If temperature wasn't given, then print a message and exit.
 	echo "Please supply a maximum desired temperature in Celsius." 1>&2
 	echo "For example:  ${0} 60" 1>&2
+	echo "You can add second argument to grab cpu temperature from lm-sensors instead." 1>&2
+	echo "For example: ${0} 60 lm-sensors" 1>&2
 	exit 2
 else
 	#Set the first argument as the maximum desired temperature.
 	MAX_TEMP=$1
+	LM_SENSORS=$2
+	echo "Using Parameters: $MAX_TEMP $LM_SENSORS" 1>&2
 fi
 
 
@@ -48,6 +57,16 @@ CORES=$((CORES - 1)) # Subtract 1 from $CORES for easier counting later.
 # Temperatures internally are calculated to the thousandth.
 MAX_TEMP=${MAX_TEMP}000
 LOW_TEMP=${LOW_TEMP}000
+
+if [ "$LM_SENSORS" == "lm-sensors" ]; then
+	LM_SENSORS=true
+	if ! sensors > /dev/null; then
+		err_exit "lm-sensors not installed or sensors not in PATH." 
+	fi
+	echo "Using lm-sensors" 1>&2
+else
+	LM_SENSORS=false
+fi
 
 FREQ_FILE="/sys/devices/system/cpu/cpu0/cpufreq/scaling_available_frequencies"
 FREQ_MIN="/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_min_freq"
@@ -69,19 +88,17 @@ FREQ_LIST_LEN=$(echo $FREQ_LIST | wc -w)
 # CURRENT_FREQ will save the index of the currently used frequency in FREQ_LIST.
 CURRENT_FREQ=2
 
-# This is a list of possible locations to read the current system temperature.
-TEMPERATURE_FILES="
-/sys/class/thermal/thermal_zone0/temp
-/sys/class/thermal/thermal_zone1/temp
-/sys/class/thermal/thermal_zone2/temp
-/sys/class/hwmon/hwmon0/temp1_input
-/sys/class/hwmon/hwmon1/temp1_input
-/sys/class/hwmon/hwmon2/temp1_input
-/sys/class/hwmon/hwmon0/device/temp1_input
-/sys/class/hwmon/hwmon1/device/temp1_input
-/sys/class/hwmon/hwmon2/device/temp1_input
-null
-"
+# Get all files that stores temperature information for all cores.
+START=0
+for (( c=$START; c<$CORES; c++ )) 
+do
+	# Possible locations to read the current system temperature.
+	TF=${TF}"/sys/class/thermal/thermal_zone${c}/temp "
+	TF=${TF}"/sys/class/hwmon/hwmon${c}/temp1_input "
+	TF=${TF}"/sys/class/hwmon/hwmon${c}/device/temp1_input "
+done
+
+TEMPERATURE_FILES=${TF}
 
 # Store the first temperature location that exists in the variable TEMP_FILE.
 # The location stored in $TEMP_FILE will be used for temperature readings.
@@ -91,7 +108,6 @@ for file in $TEMPERATURE_FILES; do
 done
 
 [ $TEMP_FILE == "null" ] && err_exit "The location for temperature reading was not found."
-
 
 ### END Initialize Global variables.
 
@@ -133,8 +149,13 @@ unthrottle () {
 
 get_temp () {
 	# Get the system temperature. Take the max of all counters
-	
-	TEMP=$(cat $TEMPERATURE_FILES 2>/dev/null | xargs -n1 | sort -g -r | head -1)
+	if [ "$LM_SENSORS" == "true" ]; then
+		TEMP=$(sensors | grep -A 0 'CPU T' | cut -d' ' -f 6 | sed 's/+//' | sed 's/°C//')
+		TEMP=$(echo "$TEMP/1" | bc)000
+	else
+		TEMP=$(cat $TEMPERATURE_FILES 2>/dev/null | xargs -n1 | sort -g -r | head -1)
+	fi
+	echo  "Current Temp: $TEMP"
 }
 
 ### END define script functions.

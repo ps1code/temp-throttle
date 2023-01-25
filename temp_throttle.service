@@ -1,0 +1,11 @@
+[Unit]
+
+Description=Throttle cpu up or down depending on temperature
+
+After=default.target
+
+[Service]
+ExecStart=/usr/bin/temp_throttle.sh 60 lmsensors 
+ExecStop=/usr/bin/pkill temp_throttle.sh
+[Install]
+WantedBy=default.target
