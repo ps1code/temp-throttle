@@ -31,6 +31,7 @@ Updates
 Author: ps1code (ps1code@outlook.com)
 
 fix:  Existing problem of not using all cores to get max temperature. 
+
 feat:  Now allows you to obtain cpu temperature from lm-sensors.
 
 You can use an optional second comand line argument "lm-sensors" to read
