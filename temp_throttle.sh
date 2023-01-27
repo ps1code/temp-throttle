@@ -18,7 +18,7 @@ EOF
 
 # Additional Credits
 # ps1code <ps1code@outlook.com> - Patch for checking all cores for max 
-				  temperature instead of the first three.
+#				  temperature instead of the first three.
 # ps1code <ps1code@outlook.com> - New feature, can now use lm-sensors (tested on v3.06)
 #				  to get cpu temperature
 # License: GNU GPL 2.0
