@@ -41,23 +41,21 @@ temperature from lm-sensors.
 
 #To install and use with systemd:
 
-\# cd temp_throttle
 
-\# cp temp_throttle.sh /usr/bin/
+$ sudo cp temp_throttle.sh /usr/bin/
 
 Modify temp_throttle.service to suit your situation.
 
-\# cp temp_throttle.service /lib/systemd/system/
+$ sudo cp temp_throttle.service /lib/systemd/system/
 
-\# sudo systemctl enable throttle_service
+$ sudo systemctl enable temp_throttle
 
-\# sudo systemctl start throttle_service
+$ sudo systemctl start temp_throttle
 
 To stop service:
 
-\# sudo systemctl stop throttle_service
+$ sudo systemctl stop temp_throttle
 
 To disable:
 
-\# sudo systemctl disable throttle_service
-
+$ sudo systemctl disable temp_throttle
