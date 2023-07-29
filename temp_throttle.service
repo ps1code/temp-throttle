@@ -7,7 +7,7 @@ After=default.target
 
 [Service]
 Type=simple
-ExecStart=nice -n 9 /usr/bin/temp_throttle.sh 60
+ExecStart=nice -n 9 /usr/local/bin/temp_throttle.sh 60
 ExecStop=/usr/bin/pkill temp_throttle.sh
 
 [Install]

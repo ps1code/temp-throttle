@@ -58,6 +58,13 @@ CORES=$((CORES - 1)) # Subtract 1 from $CORES for easier counting later.
 MAX_TEMP=${MAX_TEMP}000
 LOW_TEMP=${LOW_TEMP}000
 
+# Lets write it out to be changed dynamically
+MAX_TEMP_FILE_LOC="/tmp/temp_throttle/max_temp"
+LOW_TEMP_FILE_LOC="/tmp/temp_throttle/low_temp"
+mkdir -p /tmp/temp_throttle
+echo $MAX_TEMP 2> /dev/null > $MAX_TEMP_FILE_LOC 
+echo $LOW_TEMP 2> /dev/null > $LOW_TEMP_FILE_LOC
+
 if [ "$LM_SENSORS" == "lm-sensors" ]; then
 	LM_SENSORS=true
 	if ! sensors > /dev/null; then
@@ -172,5 +179,29 @@ while true; do
 	elif [ $TEMP -le $LOW_TEMP ]; then # Unthrottle if cool.
 		unthrottle
 	fi
-	sleep 3 # The amount of time between checking temperatures.
+	sleep 5 # The amount of time between checking temperatures.
+
+	# Allow for dynamic max temperature.
+	if [[ -f "$MAX_TEMP_FILE_LOC" ]]; then
+		 MAX_TEMP=$(cat $MAX_TEMP_FILE_LOC 2> /dev/null)
+		 if [[ $LOW_TEMP -gt $MAX_TEMP || $LOW_TEMP -eq $MAX_TEMP ]]; then
+		 	LOW_TEMP="$((MAX_TEMP-5000))"
+			echo $LOW_TEMP > $LOW_TEMP_FILE_LOC 
+		 	echo "LOW TEMP ADUSTED TO: $LOW_TEMP"
+		 fi
+		 echo "MAX TEMP: $MAX_TEMP"
+		 
+	fi
+
+	if [[ -f "$LOW_TEMP_FILE_LOC" ]]; then
+		 LOW_TEMP=$(cat $LOW_TEMP_FILE_LOC 2> /dev/null)
+		 if [[ $LOW_TEMP -gt $MAX_TEMP || $LOW_TEMP -eq $MAX_TEMP ]]; then
+		 	LOW_TEMP="$((MAX_TEMP-5000))"
+			echo $LOW_TEMP > $LOW_TEMP_FILE_LOC 
+		 	echo "LOW TEMP ADUSTED TO: $LOW_TEMP"
+		 fi
+		 
+		 echo "LOW_TEMP: $LOW_TEMP"
+	fi
+
 done

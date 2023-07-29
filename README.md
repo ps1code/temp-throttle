@@ -39,14 +39,28 @@ temperature from lm-sensors.
 
 	sudo ./temp_throttle.sh 80 lm-sensors
 
+feat:  Once program is started, it is now possible to adjust max and 
+       low cpu temperatures.  The low temperature value is used to determine
+       when the system can start increasing cpu speed.  If the low
+       temperature is equal or greater than the max it will be adjusted
+       to low = (max - 5 degrees celsius).
+
+       Note: cpu temperature is measured in millidegree celsius.
+             so for example 55 degrees celsius would be 55000.
+
+       Files to adjust temperatures:
+            /tmp/temp_throttle/low_temp
+            /tmp/temp_throttle/max_temp
+
+
 #To install and use with systemd:
 
 
-$ sudo cp temp_throttle.sh /usr/bin/
+$ sudo cp temp_throttle.sh /usr/local/bin/
 
 Modify temp_throttle.service to suit your situation.
 
-$ sudo cp temp_throttle.service /lib/systemd/system/
+$ sudo cp temp_throttle.service /etc/systemd/system
 
 $ sudo systemctl enable temp_throttle
 
